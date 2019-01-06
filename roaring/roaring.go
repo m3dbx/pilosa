@@ -1040,15 +1040,8 @@ func (b *Bitmap) containersIterator(k uint64) (stackContainerIterator, bool) {
 
 // Iterator returns a new iterator for the bitmap.
 func (b *Bitmap) Iterator() *Iterator {
-	itr := b.StackIterator()
-	return &itr
-}
-
-// StackIterator returns a new iterator for the bitmap which can
-// be kept on the stack without requiring heap allocation.
-func (b *Bitmap) StackIterator() Iterator {
-	itr := Iterator{bitmap: b}
-	itr.Seek(0)
+	itr := &Iterator{}
+	itr.Reset(b)
 	return itr
 }
 
@@ -1129,6 +1122,15 @@ type Iterator struct {
 	key    uint64
 	c      *Container
 	j, k   int32 // i: container; j: array index, bit index, or run index; k: offset within the run
+}
+
+// Reset allows the iterator to be re-used between iterating different bitmaps
+// so if frequent iteration is needed across different bitmaps, the same
+// iterator can be reused.
+func (itr *Iterator) Reset(b *Bitmap) {
+	*itr = Iterator{}
+	itr.bitmap = b
+	itr.Seek(0)
 }
 
 // Seek moves to the first value equal to or greater than `seek`.
