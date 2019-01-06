@@ -312,6 +312,11 @@ func (sc *sliceContainers) Iterator(key uint64) (citer ContainerIterator, found 
 	return &sliceIterator{e: sc, i: i}, found
 }
 
+func (sc *sliceContainers) StackIterator(key uint64) (citer StackContainerIterator, found bool) {
+	i, found := sc.seek(key)
+	return StackContainerIterator{e: sc, i: i}, found
+}
+
 func (sc *sliceContainers) Repair() {
 	for _, c := range sc.containers {
 		c.Repair()
@@ -338,4 +343,44 @@ func (si *sliceIterator) Next() bool {
 
 func (si *sliceIterator) Value() (uint64, *Container) {
 	return si.key, si.value
+}
+
+type StackContainerIterator struct {
+	// if heapIter is set, then we are falling back to the heap allocated iter
+	// since the containers weren't using a slice of containers
+	heapIter ContainerIterator
+
+	e     *sliceContainers
+	i     int
+	key   uint64
+	value *Container
+}
+
+func newStackContainerIteratorFromHeapIter(
+	heapIter ContainerIterator,
+) StackContainerIterator {
+	return StackContainerIterator{heapIter: heapIter}
+}
+
+func (i StackContainerIterator) Next() (StackContainerIterator, bool) {
+	if i.heapIter != nil {
+		return StackContainerIterator{heapIter: i.heapIter}, i.heapIter.Next()
+	}
+
+	si := i
+	if si.e == nil || si.i > len(si.e.keys)-1 {
+		return StackContainerIterator{}, false
+	}
+	si.key = si.e.keys[si.i]
+	si.value = si.e.containers[si.i]
+	si.i++
+	return si, true
+}
+
+func (i StackContainerIterator) Value() (uint64, *Container) {
+	if i.heapIter != nil {
+		return i.heapIter.Value()
+	}
+
+	return i.key, i.value
 }

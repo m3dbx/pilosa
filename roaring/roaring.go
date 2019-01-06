@@ -285,7 +285,7 @@ func (b *Bitmap) CountRange(start, end uint64) (n uint64) {
 	skey := highbits(start)
 	ekey := highbits(end)
 
-	citer, found := b.Containers.Iterator(highbits(start))
+	citer, found := b.containersIterator(highbits(start))
 	// If range is entirely in one container then just count that range.
 	if found && skey == ekey {
 		citer.Next()
@@ -293,7 +293,7 @@ func (b *Bitmap) CountRange(start, end uint64) (n uint64) {
 		return uint64(c.countRange(int32(lowbits(start)), int32(lowbits(end))))
 	}
 
-	for citer.Next() {
+	for citer, ok := citer.Next(); ok; citer, ok = citer.Next() {
 		k, c := citer.Value()
 		if k < skey {
 			// TODO remove once we've validated this stuff works
@@ -1033,6 +1033,17 @@ func (b *Bitmap) Iterator() *Iterator {
 	itr := &Iterator{bitmap: b}
 	itr.Seek(0)
 	return itr
+}
+
+// containersIterator returns a stack container iterator where possible, and
+// where not possible will fall back to a heap allocated iterator with the
+// StackContainerIterator interface.
+func (b *Bitmap) containersIterator(k uint64) (StackContainerIterator, bool) {
+	if sliceContainers, ok := b.Containers.(*sliceContainers); ok {
+		return sliceContainers.StackIterator(k)
+	}
+	iter, ok := b.Containers.Iterator(k)
+	return newStackContainerIteratorFromHeapIter(iter), ok
 }
 
 // Info returns stats for the bitmap.
