@@ -121,6 +121,10 @@ type Bitmap struct {
 	// Writer where operations are appended to.
 	OpWriter io.Writer
 
+	// errWriter has some cached buffers used when WriteTo is
+	// called, this helps allocations if this bitmap is written out often.
+	errWriter *errWriter
+
 	// Make sure to update the Reset() method if any new fields are added to
 	// this struct.
 }
@@ -818,34 +822,51 @@ type errWriter struct {
 	w   io.Writer
 	err error
 	n   int
+
+	byte2 []byte
+	byte4 []byte
+	byte8 []byte
 }
 
-func (ew *errWriter) WriteUint16(b []byte, v uint16) {
+func newErrWriter() *errWriter {
+	return &errWriter{
+		byte2: make([]byte, 2),
+		byte4: make([]byte, 4),
+		byte8: make([]byte, 8),
+	}
+}
+
+func (ew *errWriter) Reset(w io.Writer) {
+	ew.w = w
+	ew.n = 0
+}
+
+func (ew *errWriter) WriteUint16(v uint16) {
 	if ew.err != nil {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint16(b, v)
-	n, ew.err = ew.w.Write(b)
+	binary.LittleEndian.PutUint16(ew.byte2, v)
+	n, ew.err = ew.w.Write(ew.byte2)
 	ew.n += n
 }
-func (ew *errWriter) WriteUint32(b []byte, v uint32) {
+func (ew *errWriter) WriteUint32(v uint32) {
 	if ew.err != nil {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint32(b, v)
-	n, ew.err = ew.w.Write(b)
+	binary.LittleEndian.PutUint32(ew.byte4, v)
+	n, ew.err = ew.w.Write(ew.byte4)
 	ew.n += n
 }
 
-func (ew *errWriter) WriteUint64(b []byte, v uint64) {
+func (ew *errWriter) WriteUint64(v uint64) {
 	if ew.err != nil {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint64(b, v)
-	n, ew.err = ew.w.Write(b)
+	binary.LittleEndian.PutUint64(ew.byte8, v)
+	n, ew.err = ew.w.Write(ew.byte8)
 	ew.n += n
 }
 
@@ -857,20 +878,20 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 
 	containerCount := b.Containers.Size() - b.countEmptyContainers()
 	headerSize := headerBaseSize
-	byte2 := make([]byte, 2)
-	byte4 := make([]byte, 4)
-	byte8 := make([]byte, 8)
+
+	// Alloc a new error writer or reuse an existing one
+	ew := b.errWriter
+	if ew == nil {
+		ew = newErrWriter()
+		b.errWriter = ew
+	}
+	ew.Reset(w)
 
 	// Build header before writing individual container blocks.
 	// Metadata for each container is 8+2+2+4 = sizeof(key) + sizeof(containerType)+sizeof(cardinality) + sizeof(file offset)
 	// Cookie header section.
-	ew := &errWriter{
-		w: w,
-		n: 0,
-	}
-
-	ew.WriteUint32(byte4, cookie)
-	ew.WriteUint32(byte4, uint32(containerCount))
+	ew.WriteUint32(cookie)
+	ew.WriteUint32(uint32(containerCount))
 
 	// Descriptive header section: encode keys and cardinality.
 	// Key and cardinality are stored interleaved here, 12 bytes per container.
@@ -882,9 +903,9 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 		//count := c.count()
 		//assert(c.count() == c.n, "cannot write container count, mismatch: count=%d, n=%d", count, c.n)
 		if c.n > 0 {
-			ew.WriteUint64(byte8, key)
-			ew.WriteUint16(byte2, uint16(c.containerType))
-			ew.WriteUint16(byte2, uint16(c.n-1))
+			ew.WriteUint64(key)
+			ew.WriteUint16(uint16(c.containerType))
+			ew.WriteUint16(uint16(c.n - 1))
 		}
 
 	}
@@ -896,13 +917,20 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 	for citer.Next() {
 		_, c := citer.Value()
 		if c.n > 0 {
-			ew.WriteUint32(byte4, offset)
+			ew.WriteUint32(offset)
 			offset += uint32(c.size())
 		}
 
 	}
-	if ew.err != nil {
-		return int64(ew.n), ew.err
+
+	// Results of write
+	n, err = int64(ew.n), ew.err
+
+	// Do not hold a ref to the writer any longer
+	ew.Reset(nil)
+
+	if err != nil {
+		return int64(n), err
 	}
 
 	n = int64(headerSize + (containerCount * (8 + 2 + 2 + 4)))
