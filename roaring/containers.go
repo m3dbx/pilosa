@@ -312,11 +312,6 @@ func (sc *sliceContainers) Iterator(key uint64) (citer ContainerIterator, found 
 	return &sliceIterator{e: sc, i: i}, found
 }
 
-func (sc *sliceContainers) StackIterator(key uint64) (citer StackContainerIterator, found bool) {
-	i, found := sc.seek(key)
-	return StackContainerIterator{e: sc, i: i}, found
-}
-
 func (sc *sliceContainers) Repair() {
 	for _, c := range sc.containers {
 		c.Repair()
@@ -345,7 +340,7 @@ func (si *sliceIterator) Value() (uint64, *Container) {
 	return si.key, si.value
 }
 
-type StackContainerIterator struct {
+type stackContainerIterator struct {
 	// if heapIter is set, then we are falling back to the heap allocated iter
 	// since the containers weren't using a slice of containers
 	heapIter ContainerIterator
@@ -356,31 +351,45 @@ type StackContainerIterator struct {
 	value *Container
 }
 
-func newStackContainerIteratorFromHeapIter(
-	heapIter ContainerIterator,
-) StackContainerIterator {
-	return StackContainerIterator{heapIter: heapIter}
+func stackContainerIteratorFromContainers(
+	key uint64,
+	containers Containers,
+) (iter stackContainerIterator, found bool) {
+	// This falls back to just using a heap allocated iterator
+	var heapIter ContainerIterator
+	heapIter, found = containers.Iterator(key)
+	iter = stackContainerIterator{heapIter: heapIter}
+	return
 }
 
-func (i StackContainerIterator) Next() (StackContainerIterator, bool) {
-	if i.heapIter != nil {
-		return StackContainerIterator{heapIter: i.heapIter}, i.heapIter.Next()
+func stackContainerIteratorFromSliceContainers(
+	key uint64,
+	sc *sliceContainers,
+) (iter stackContainerIterator, found bool) {
+	var i int
+	i, found = sc.seek(key)
+	iter = stackContainerIterator{e: sc, i: i}
+	return
+}
+
+func (si *stackContainerIterator) Next() bool {
+	if si.heapIter != nil {
+		return si.heapIter.Next()
 	}
 
-	si := i
 	if si.e == nil || si.i > len(si.e.keys)-1 {
-		return StackContainerIterator{}, false
+		return false
 	}
 	si.key = si.e.keys[si.i]
 	si.value = si.e.containers[si.i]
 	si.i++
-	return si, true
+	return true
 }
 
-func (i StackContainerIterator) Value() (uint64, *Container) {
-	if i.heapIter != nil {
-		return i.heapIter.Value()
+func (si *stackContainerIterator) Value() (uint64, *Container) {
+	if si.heapIter != nil {
+		return si.heapIter.Value()
 	}
 
-	return i.key, i.value
+	return si.key, si.value
 }
