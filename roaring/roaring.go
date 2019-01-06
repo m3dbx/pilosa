@@ -121,6 +121,10 @@ type Bitmap struct {
 	// Writer where operations are appended to.
 	OpWriter io.Writer
 
+	// errWriter has some cached buffers used when WriteTo is
+	// called, this helps allocations if this bitmap is written out often.
+	errWriter *errWriter
+
 	// Make sure to update the Reset() method if any new fields are added to
 	// this struct.
 }
@@ -285,7 +289,7 @@ func (b *Bitmap) CountRange(start, end uint64) (n uint64) {
 	skey := highbits(start)
 	ekey := highbits(end)
 
-	citer, found := b.Containers.Iterator(highbits(start))
+	citer, found := b.containersIterator(highbits(start))
 	// If range is entirely in one container then just count that range.
 	if found && skey == ekey {
 		citer.Next()
@@ -373,7 +377,7 @@ func (b *Bitmap) OffsetRange(offset, start, end uint64) *Bitmap {
 
 	off := highbits(offset)
 	hi0, hi1 := highbits(start), highbits(end)
-	citer, _ := b.Containers.Iterator(hi0)
+	citer, _ := b.containersIterator(hi0)
 	other := NewBitmap()
 	for citer.Next() {
 		k, c := citer.Value()
@@ -395,8 +399,8 @@ func (b *Bitmap) container(key uint64) *Container {
 // intersecting the two and counting the result.
 func (b *Bitmap) IntersectionCount(other *Bitmap) uint64 {
 	var n uint64
-	iiter, _ := b.Containers.Iterator(0)
-	jiter, _ := other.Containers.Iterator(0)
+	iiter, _ := b.containersIterator(0)
+	jiter, _ := other.containersIterator(0)
 	i, j := iiter.Next(), jiter.Next()
 	ki, ci := iiter.Value()
 	kj, cj := jiter.Value()
@@ -420,8 +424,8 @@ func (b *Bitmap) IntersectionCount(other *Bitmap) uint64 {
 // Intersect returns the intersection of b and other.
 func (b *Bitmap) Intersect(other *Bitmap) *Bitmap {
 	output := NewBitmap()
-	iiter, _ := b.Containers.Iterator(0)
-	jiter, _ := other.Containers.Iterator(0)
+	iiter, _ := b.containersIterator(0)
+	jiter, _ := other.containersIterator(0)
 	i, j := iiter.Next(), jiter.Next()
 	ki, ci := iiter.Value()
 	kj, cj := jiter.Value()
@@ -462,8 +466,8 @@ func (b *Bitmap) UnionInPlace(others ...*Bitmap) {
 }
 
 func (b *Bitmap) unionIntoTargetSingle(target *Bitmap, other *Bitmap) {
-	iiter, _ := b.Containers.Iterator(0)
-	jiter, _ := other.Containers.Iterator(0)
+	iiter, _ := b.containersIterator(0)
+	jiter, _ := other.containersIterator(0)
 	i, j := iiter.Next(), jiter.Next()
 	ki, ci := iiter.Value()
 	kj, cj := jiter.Value()
@@ -607,7 +611,7 @@ func (b *Bitmap) unionInPlace(others ...*Bitmap) {
 	}
 
 	for _, other := range others {
-		otherIter, _ := other.Containers.Iterator(0)
+		otherIter, _ := other.containersIterator(0)
 		if otherIter.Next() {
 			bitmapIters = append(bitmapIters, handledIter{
 				iter:    otherIter,
@@ -732,8 +736,8 @@ func (b *Bitmap) unionInPlace(others ...*Bitmap) {
 func (b *Bitmap) Difference(other *Bitmap) *Bitmap {
 	output := NewBitmap()
 
-	iiter, _ := b.Containers.Iterator(0)
-	jiter, _ := other.Containers.Iterator(0)
+	iiter, _ := b.containersIterator(0)
+	jiter, _ := other.containersIterator(0)
 	i, j := iiter.Next(), jiter.Next()
 	ki, ci := iiter.Value()
 	kj, cj := jiter.Value()
@@ -759,8 +763,8 @@ func (b *Bitmap) Difference(other *Bitmap) *Bitmap {
 func (b *Bitmap) Xor(other *Bitmap) *Bitmap {
 	output := NewBitmap()
 
-	iiter, _ := b.Containers.Iterator(0)
-	jiter, _ := other.Containers.Iterator(0)
+	iiter, _ := b.containersIterator(0)
+	jiter, _ := other.containersIterator(0)
 	i, j := iiter.Next(), jiter.Next()
 	ki, ci := iiter.Value()
 	kj, cj := jiter.Value()
@@ -785,7 +789,7 @@ func (b *Bitmap) Xor(other *Bitmap) *Bitmap {
 
 // removeEmptyContainers deletes all containers that have a count of zero.
 func (b *Bitmap) removeEmptyContainers() {
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for citer.Next() {
 		k, c := citer.Value()
 		if c.n == 0 {
@@ -795,7 +799,7 @@ func (b *Bitmap) removeEmptyContainers() {
 }
 func (b *Bitmap) countEmptyContainers() int {
 	result := 0
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for citer.Next() {
 		_, c := citer.Value()
 		if c.n == 0 {
@@ -807,7 +811,7 @@ func (b *Bitmap) countEmptyContainers() int {
 
 // Optimize converts array and bitmap containers to run containers as necessary.
 func (b *Bitmap) Optimize() {
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for citer.Next() {
 		_, c := citer.Value()
 		c.optimize()
@@ -818,34 +822,51 @@ type errWriter struct {
 	w   io.Writer
 	err error
 	n   int
+
+	byte2 []byte
+	byte4 []byte
+	byte8 []byte
 }
 
-func (ew *errWriter) WriteUint16(b []byte, v uint16) {
+func newErrWriter() *errWriter {
+	return &errWriter{
+		byte2: make([]byte, 2),
+		byte4: make([]byte, 4),
+		byte8: make([]byte, 8),
+	}
+}
+
+func (ew *errWriter) Reset(w io.Writer) {
+	ew.w = w
+	ew.n = 0
+}
+
+func (ew *errWriter) WriteUint16(v uint16) {
 	if ew.err != nil {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint16(b, v)
-	n, ew.err = ew.w.Write(b)
+	binary.LittleEndian.PutUint16(ew.byte2, v)
+	n, ew.err = ew.w.Write(ew.byte2)
 	ew.n += n
 }
-func (ew *errWriter) WriteUint32(b []byte, v uint32) {
+func (ew *errWriter) WriteUint32(v uint32) {
 	if ew.err != nil {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint32(b, v)
-	n, ew.err = ew.w.Write(b)
+	binary.LittleEndian.PutUint32(ew.byte4, v)
+	n, ew.err = ew.w.Write(ew.byte4)
 	ew.n += n
 }
 
-func (ew *errWriter) WriteUint64(b []byte, v uint64) {
+func (ew *errWriter) WriteUint64(v uint64) {
 	if ew.err != nil {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint64(b, v)
-	n, ew.err = ew.w.Write(b)
+	binary.LittleEndian.PutUint64(ew.byte8, v)
+	n, ew.err = ew.w.Write(ew.byte8)
 	ew.n += n
 }
 
@@ -857,24 +878,24 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 
 	containerCount := b.Containers.Size() - b.countEmptyContainers()
 	headerSize := headerBaseSize
-	byte2 := make([]byte, 2)
-	byte4 := make([]byte, 4)
-	byte8 := make([]byte, 8)
+
+	// Alloc a new error writer or reuse an existing one
+	ew := b.errWriter
+	if ew == nil {
+		ew = newErrWriter()
+		b.errWriter = ew
+	}
+	ew.Reset(w)
 
 	// Build header before writing individual container blocks.
 	// Metadata for each container is 8+2+2+4 = sizeof(key) + sizeof(containerType)+sizeof(cardinality) + sizeof(file offset)
 	// Cookie header section.
-	ew := &errWriter{
-		w: w,
-		n: 0,
-	}
-
-	ew.WriteUint32(byte4, cookie)
-	ew.WriteUint32(byte4, uint32(containerCount))
+	ew.WriteUint32(cookie)
+	ew.WriteUint32(uint32(containerCount))
 
 	// Descriptive header section: encode keys and cardinality.
 	// Key and cardinality are stored interleaved here, 12 bytes per container.
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for citer.Next() {
 		key, c := citer.Value()
 		// Verify container count before writing.
@@ -882,9 +903,9 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 		//count := c.count()
 		//assert(c.count() == c.n, "cannot write container count, mismatch: count=%d, n=%d", count, c.n)
 		if c.n > 0 {
-			ew.WriteUint64(byte8, key)
-			ew.WriteUint16(byte2, uint16(c.containerType))
-			ew.WriteUint16(byte2, uint16(c.n-1))
+			ew.WriteUint64(key)
+			ew.WriteUint16(uint16(c.containerType))
+			ew.WriteUint16(uint16(c.n - 1))
 		}
 
 	}
@@ -892,23 +913,30 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 	// Offset header section: write the offset for each container block.
 	// 4 bytes per container.
 	offset := uint32(headerSize + (containerCount * (8 + 2 + 2 + 4)))
-	citer, _ = b.Containers.Iterator(0)
+	citer, _ = b.containersIterator(0)
 	for citer.Next() {
 		_, c := citer.Value()
 		if c.n > 0 {
-			ew.WriteUint32(byte4, offset)
+			ew.WriteUint32(offset)
 			offset += uint32(c.size())
 		}
 
 	}
-	if ew.err != nil {
-		return int64(ew.n), ew.err
+
+	// Results of write
+	n, err = int64(ew.n), ew.err
+
+	// Do not hold a ref to the writer any longer
+	ew.Reset(nil)
+
+	if err != nil {
+		return int64(n), err
 	}
 
 	n = int64(headerSize + (containerCount * (8 + 2 + 2 + 4)))
 
 	// Container storage section: write each container block.
-	citer, _ = b.Containers.Iterator(0)
+	citer, _ = b.containersIterator(0)
 	for citer.Next() {
 		_, c := citer.Value()
 		if c.n > 0 {
@@ -956,7 +984,7 @@ func (b *Bitmap) unmarshalPilosaRoaring(data []byte) error {
 	opsOffset := headerSize + int(keyN)*12
 
 	// Read container offsets and attach data.
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for i, buf := 0, data[opsOffset:]; i < int(keyN); i, buf = i+1, buf[4:] {
 		offset := binary.LittleEndian.Uint32(buf[0:4])
 		// Verify the offset is within the bounds of the input data.
@@ -1028,10 +1056,20 @@ func (b *Bitmap) writeOp(op *op) error {
 	return nil
 }
 
+// containersIterator returns a stack container iterator where possible, and
+// where not possible will fall back to a heap allocated iterator with the
+// StackContainerIterator interface.
+func (b *Bitmap) containersIterator(k uint64) (stackContainerIterator, bool) {
+	if sliceContainers, ok := b.Containers.(*sliceContainers); ok {
+		return stackContainerIteratorFromSliceContainers(k, sliceContainers)
+	}
+	return stackContainerIteratorFromContainers(k, b.Containers)
+}
+
 // Iterator returns a new iterator for the bitmap.
 func (b *Bitmap) Iterator() *Iterator {
-	itr := &Iterator{bitmap: b}
-	itr.Seek(0)
+	itr := &Iterator{}
+	itr.Reset(b)
 	return itr
 }
 
@@ -1042,7 +1080,7 @@ func (b *Bitmap) Info() bitmapInfo {
 		Containers: make([]containerInfo, 0, b.Containers.Size()),
 	}
 
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for citer.Next() {
 		k, c := citer.Value()
 		ci := c.info()
@@ -1057,7 +1095,7 @@ func (b *Bitmap) Check() error {
 	var a ErrorList
 
 	// Check each container.
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for citer.Next() {
 		k, c := citer.Value()
 		if err := c.check(); err != nil {
@@ -1108,10 +1146,19 @@ type bitmapInfo struct {
 // Iterator represents an iterator over a Bitmap.
 type Iterator struct {
 	bitmap *Bitmap
-	citer  ContainerIterator
+	citer  stackContainerIterator
 	key    uint64
 	c      *Container
 	j, k   int32 // i: container; j: array index, bit index, or run index; k: offset within the run
+}
+
+// Reset allows the iterator to be re-used between iterating different bitmaps
+// so if frequent iteration is needed across different bitmaps, the same
+// iterator can be reused.
+func (itr *Iterator) Reset(b *Bitmap) {
+	*itr = Iterator{}
+	itr.bitmap = b
+	itr.Seek(0)
 }
 
 // Seek moves to the first value equal to or greater than `seek`.
@@ -1121,7 +1168,7 @@ func (itr *Iterator) Seek(seek uint64) {
 	itr.k = -1
 
 	// Move to the correct container.
-	itr.citer, _ = itr.bitmap.Containers.Iterator(highbits(seek))
+	itr.citer, _ = itr.bitmap.containersIterator(highbits(seek))
 	if !itr.citer.Next() {
 		itr.c = nil
 		return // eof
@@ -3938,8 +3985,8 @@ func bitmapsEqual(b, c *Bitmap) error { // nolint: deadcode
 		return errors.New("opNs not equal")
 	}
 
-	biter, _ := b.Containers.Iterator(0)
-	citer, _ := c.Containers.Iterator(0)
+	biter, _ := b.containersIterator(0)
+	citer, _ := c.containersIterator(0)
 	bn, cn := biter.Next(), citer.Next()
 	for ; bn && cn; bn, cn = biter.Next(), citer.Next() {
 		bk, bc := biter.Value()
@@ -4085,7 +4132,7 @@ func (b *Bitmap) UnmarshalBinary(data []byte) error {
 
 func readOffsets(b *Bitmap, data []byte, pos int, keyN uint32) error {
 
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for i, buf := 0, data[pos:]; i < int(keyN); i, buf = i+1, buf[4:] {
 		offset := binary.LittleEndian.Uint32(buf[0:4])
 		// Verify the offset is within the bounds of the input data.
@@ -4113,7 +4160,7 @@ func readOffsets(b *Bitmap, data []byte, pos int, keyN uint32) error {
 }
 
 func readWithRuns(b *Bitmap, data []byte, pos int, keyN uint32) {
-	citer, _ := b.Containers.Iterator(0)
+	citer, _ := b.containersIterator(0)
 	for i := 0; i < int(keyN); i++ {
 		citer.Next()
 		_, c := citer.Value()
@@ -4146,7 +4193,7 @@ func readWithRuns(b *Bitmap, data []byte, pos int, keyN uint32) {
 // and assist with the unionIntoTarget algorithm by abstracting away some tedious
 // operations.
 type handledIter struct {
-	iter    ContainerIterator
+	iter    stackContainerIterator
 	hasNext bool
 	handled bool
 }
@@ -4156,8 +4203,8 @@ type handledIters []handledIter
 func (w handledIters) next() bool {
 	hasNext := false
 
-	for i, wrapped := range w {
-		next := wrapped.iter.Next()
+	for i := range w {
+		next := w[i].iter.Next()
 		w[i].hasNext = next
 		w[i].handled = false
 		if next {
