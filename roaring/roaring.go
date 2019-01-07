@@ -22,6 +22,7 @@ import (
 	"io"
 	"math/bits"
 	"sort"
+	"sync"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -120,10 +121,6 @@ type Bitmap struct {
 
 	// Writer where operations are appended to.
 	OpWriter io.Writer
-
-	// errWriter has some cached buffers used when WriteTo is
-	// called, this helps allocations if this bitmap is written out often.
-	errWriter *errWriter
 
 	// Make sure to update the Reset() method if any new fields are added to
 	// this struct.
@@ -818,20 +815,32 @@ func (b *Bitmap) Optimize() {
 	}
 }
 
+var errWriterPool = sync.Pool{
+	New: func() interface{} {
+		return newErrWriter()
+	},
+}
+
+func getPooledErrWriter() *errWriter {
+	return errWriterPool.Get().(*errWriter)
+}
+
+func putPooledErrWriter(w *errWriter) {
+	// Avoid any ref to the writer strongly being held onto
+	w.Reset(nil)
+	errWriterPool.Put(w)
+}
+
 type errWriter struct {
 	w   io.Writer
 	err error
 	n   int
 
-	byte2 []byte
-	byte4 []byte
 	byte8 []byte
 }
 
 func newErrWriter() *errWriter {
 	return &errWriter{
-		byte2: make([]byte, 2),
-		byte4: make([]byte, 4),
 		byte8: make([]byte, 8),
 	}
 }
@@ -846,8 +855,8 @@ func (ew *errWriter) WriteUint16(v uint16) {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint16(ew.byte2, v)
-	n, ew.err = ew.w.Write(ew.byte2)
+	binary.LittleEndian.PutUint16(ew.byte8[:2], v)
+	n, ew.err = ew.w.Write(ew.byte8[:2])
 	ew.n += n
 }
 func (ew *errWriter) WriteUint32(v uint32) {
@@ -855,8 +864,8 @@ func (ew *errWriter) WriteUint32(v uint32) {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint32(ew.byte4, v)
-	n, ew.err = ew.w.Write(ew.byte4)
+	binary.LittleEndian.PutUint32(ew.byte8[:4], v)
+	n, ew.err = ew.w.Write(ew.byte8[:4])
 	ew.n += n
 }
 
@@ -865,8 +874,8 @@ func (ew *errWriter) WriteUint64(v uint64) {
 		return
 	}
 	var n int
-	binary.LittleEndian.PutUint64(ew.byte8, v)
-	n, ew.err = ew.w.Write(ew.byte8)
+	binary.LittleEndian.PutUint64(ew.byte8[:8], v)
+	n, ew.err = ew.w.Write(ew.byte8[:8])
 	ew.n += n
 }
 
@@ -880,11 +889,7 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 	headerSize := headerBaseSize
 
 	// Alloc a new error writer or reuse an existing one
-	ew := b.errWriter
-	if ew == nil {
-		ew = newErrWriter()
-		b.errWriter = ew
-	}
+	ew := getPooledErrWriter()
 	ew.Reset(w)
 
 	// Build header before writing individual container blocks.
@@ -923,11 +928,11 @@ func (b *Bitmap) WriteTo(w io.Writer) (n int64, err error) {
 
 	}
 
-	// Results of write
+	// Results of writing the header
 	n, err = int64(ew.n), ew.err
 
-	// Do not hold a ref to the writer any longer
-	ew.Reset(nil)
+	// Return the err writer
+	putPooledErrWriter(ew)
 
 	if err != nil {
 		return int64(n), err
