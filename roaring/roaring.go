@@ -1406,16 +1406,16 @@ func NewContainerWithPooling(poolingConfig ContainerPoolingConfiguration) *Conta
 		containerType: containerArray,
 	}
 
-	if poolingConfig.AllocateArray {
-		c.array = make([]uint16, 0, ArrayMaxSize)
+	if poolingConfig.MaxArraySize > 0 {
+		c.array = make([]uint16, 0, poolingConfig.MaxArraySize)
 	}
 	if poolingConfig.AllocateBitmap {
 		c.bitmap = make([]uint64, bitmapN)
 		// Start as a bitmap since we had to allocate it anyways.
 		c.containerType = containerBitmap
 	}
-	if poolingConfig.AllocateRuns {
-		c.runs = make([]interval16, 0, runMaxSize)
+	if poolingConfig.MaxRunsSize > 0 {
+		c.runs = make([]interval16, 0, poolingConfig.MaxRunsSize)
 	}
 
 	return c
@@ -1425,7 +1425,7 @@ func NewContainerWithPooling(poolingConfig ContainerPoolingConfiguration) *Conta
 // datastructures.
 func (c *Container) Reset() {
 	c.mapped = false
-	if c.pooled {
+	if c.pooled && c.bitmap != nil {
 		c.containerType = containerBitmap
 	} else {
 		c.containerType = containerArray
