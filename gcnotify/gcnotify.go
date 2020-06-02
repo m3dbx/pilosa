@@ -16,7 +16,7 @@ package gcnotify
 
 import (
 	"github.com/CAFxX/gcnotifier"
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 // Ensure ActiveGCNotifier implements interface.

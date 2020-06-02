@@ -22,10 +22,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pilosa/pilosa/logger"
-	"github.com/pilosa/pilosa/pql"
-	"github.com/pilosa/pilosa/roaring"
-	"github.com/pilosa/pilosa/stats"
+	"github.com/m3dbx/pilosa/logger"
+	"github.com/m3dbx/pilosa/pql"
+	"github.com/m3dbx/pilosa/roaring"
+	"github.com/m3dbx/pilosa/stats"
 	"github.com/pkg/errors"
 )
 

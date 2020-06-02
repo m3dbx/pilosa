@@ -28,10 +28,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/memberlist"
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/logger"
-	"github.com/pilosa/pilosa/roaring"
-	"github.com/pilosa/pilosa/toml"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/logger"
+	"github.com/m3dbx/pilosa/roaring"
+	"github.com/m3dbx/pilosa/toml"
 	"github.com/pkg/errors"
 )
 

@@ -19,8 +19,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/boltdb"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/boltdb"
 )
 
 // Holder is a test wrapper for pilosa.Holder.

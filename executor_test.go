@@ -27,9 +27,9 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/server"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/server"
+	"github.com/m3dbx/pilosa/test"
 	"github.com/pkg/errors"
 )
 

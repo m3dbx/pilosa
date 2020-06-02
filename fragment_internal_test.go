@@ -30,8 +30,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/pilosa/pilosa/pql"
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/pql"
+	"github.com/m3dbx/pilosa/roaring"
 )
 
 // Test flags

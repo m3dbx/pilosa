@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pilosa/pilosa/logger"
+	"github.com/m3dbx/pilosa/logger"
 	"github.com/pkg/errors"
 )
 
@@ -137,11 +137,11 @@ func (d *diagnosticsCollector) compareVersion(value string) error {
 	localVersion := versionSegments(d.version)
 
 	if localVersion[0] < currentVersion[0] { //Major
-		return fmt.Errorf("Warning: You are running Pilosa %s. A newer version (%s) is available: https://github.com/pilosa/pilosa/releases", d.version, value)
+		return fmt.Errorf("Warning: You are running Pilosa %s. A newer version (%s) is available: https://github.com/m3dbx/pilosa/releases", d.version, value)
 	} else if localVersion[1] < currentVersion[1] && localVersion[0] == currentVersion[0] { // Minor
-		return fmt.Errorf("Warning: You are running Pilosa %s. The latest Minor release is %s: https://github.com/pilosa/pilosa/releases", d.version, value)
+		return fmt.Errorf("Warning: You are running Pilosa %s. The latest Minor release is %s: https://github.com/m3dbx/pilosa/releases", d.version, value)
 	} else if localVersion[2] < currentVersion[2] && localVersion[0] == currentVersion[0] && localVersion[1] == currentVersion[1] { // Patch
-		return fmt.Errorf("There is a new patch release of Pilosa available: %s: https://github.com/pilosa/pilosa/releases", value)
+		return fmt.Errorf("There is a new patch release of Pilosa available: %s: https://github.com/m3dbx/pilosa/releases", value)
 	}
 
 	return nil

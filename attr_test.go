@@ -22,8 +22,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/boltdb"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/boltdb"
 )
 
 // Ensure database can set and retrieve column attributes.

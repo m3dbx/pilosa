@@ -17,8 +17,8 @@ package server
 import (
 	"time"
 
-	"github.com/pilosa/pilosa/gossip"
-	"github.com/pilosa/pilosa/toml"
+	"github.com/m3dbx/pilosa/gossip"
+	"github.com/m3dbx/pilosa/toml"
 	"github.com/uber/jaeger-client-go"
 )
 

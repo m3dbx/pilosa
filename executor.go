@@ -21,8 +21,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/pilosa/pilosa/pql"
-	"github.com/pilosa/pilosa/tracing"
+	"github.com/m3dbx/pilosa/pql"
+	"github.com/m3dbx/pilosa/tracing"
 	"github.com/pkg/errors"
 )
 

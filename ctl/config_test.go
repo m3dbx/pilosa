@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pilosa/pilosa/server"
+	"github.com/m3dbx/pilosa/server"
 )
 
 func TestConfigCommand_Run(t *testing.T) {

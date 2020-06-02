@@ -17,7 +17,7 @@ package gopsutil
 import (
 	"runtime"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 )

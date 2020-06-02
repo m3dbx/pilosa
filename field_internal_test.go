@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pilosa/pilosa/pql"
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/pql"
+	"github.com/m3dbx/pilosa/roaring"
 )
 
 // Ensure a bsiGroup can adjust to its baseValue.

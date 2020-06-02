@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/pilosa/pilosa/logger"
-	"github.com/pilosa/pilosa/stats"
+	"github.com/m3dbx/pilosa/logger"
+	"github.com/m3dbx/pilosa/stats"
 )
 
 // StatsD protocol wrapper using the DataDog library that added Tags to the StatsD protocol

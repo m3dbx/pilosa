@@ -19,9 +19,9 @@ import (
 	"sort"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/internal"
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/internal"
+	"github.com/m3dbx/pilosa/roaring"
 	"github.com/pkg/errors"
 )
 

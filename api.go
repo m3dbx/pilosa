@@ -26,10 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pilosa/pilosa/pql"
-	"github.com/pilosa/pilosa/roaring"
-	"github.com/pilosa/pilosa/stats"
-	"github.com/pilosa/pilosa/tracing"
+	"github.com/m3dbx/pilosa/pql"
+	"github.com/m3dbx/pilosa/roaring"
+	"github.com/m3dbx/pilosa/stats"
+	"github.com/m3dbx/pilosa/tracing"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )

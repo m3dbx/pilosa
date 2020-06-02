@@ -35,7 +35,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/roaring"
 )
 
 const (

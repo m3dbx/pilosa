@@ -17,8 +17,8 @@ package ctl
 import (
 	"crypto/tls"
 
-	"github.com/pilosa/pilosa/http"
-	"github.com/pilosa/pilosa/server"
+	"github.com/m3dbx/pilosa/http"
+	"github.com/m3dbx/pilosa/server"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )

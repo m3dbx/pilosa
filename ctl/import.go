@@ -25,9 +25,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/http"
-	"github.com/pilosa/pilosa/server"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/http"
+	"github.com/m3dbx/pilosa/server"
 	"github.com/pkg/errors"
 )
 

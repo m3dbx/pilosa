@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 var _ pilosa.TranslateStore = (*TranslateStore)(nil)

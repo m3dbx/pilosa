@@ -34,16 +34,16 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/boltdb"
-	"github.com/pilosa/pilosa/encoding/proto"
-	"github.com/pilosa/pilosa/gcnotify"
-	"github.com/pilosa/pilosa/gopsutil"
-	"github.com/pilosa/pilosa/gossip"
-	"github.com/pilosa/pilosa/http"
-	"github.com/pilosa/pilosa/logger"
-	"github.com/pilosa/pilosa/stats"
-	"github.com/pilosa/pilosa/statsd"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/boltdb"
+	"github.com/m3dbx/pilosa/encoding/proto"
+	"github.com/m3dbx/pilosa/gcnotify"
+	"github.com/m3dbx/pilosa/gopsutil"
+	"github.com/m3dbx/pilosa/gossip"
+	"github.com/m3dbx/pilosa/http"
+	"github.com/m3dbx/pilosa/logger"
+	"github.com/m3dbx/pilosa/stats"
+	"github.com/m3dbx/pilosa/statsd"
 	"github.com/pkg/errors"
 )
 

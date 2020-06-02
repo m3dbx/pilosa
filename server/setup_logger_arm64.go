@@ -4,7 +4,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/pilosa/pilosa/logger"
+	"github.com/m3dbx/pilosa/logger"
 	"github.com/pkg/errors"
 )
 

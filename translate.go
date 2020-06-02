@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/cespare/xxhash"
-	"github.com/pilosa/pilosa/logger"
+	"github.com/m3dbx/pilosa/logger"
 	"github.com/pkg/errors"
 )
 

@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 // Test custom UnmarshalJSON for postIndexRequest object

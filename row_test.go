@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 // Ensure a row can be merged

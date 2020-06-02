@@ -20,8 +20,8 @@ import (
 	"io"
 
 	"github.com/pelletier/go-toml"
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/server"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/server"
 	"github.com/pkg/errors"
 )
 

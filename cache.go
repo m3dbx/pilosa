@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pilosa/pilosa/lru"
-	"github.com/pilosa/pilosa/stats"
+	"github.com/m3dbx/pilosa/lru"
+	"github.com/m3dbx/pilosa/stats"
 )
 
 const (

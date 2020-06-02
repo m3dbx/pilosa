@@ -17,7 +17,7 @@ package pilosa
 import (
 	"fmt"
 
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/roaring"
 )
 
 // iterator is an interface for looping over row/column pairs.

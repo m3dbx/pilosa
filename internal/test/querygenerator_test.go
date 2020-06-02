@@ -17,7 +17,7 @@ package test
 import (
 	"testing"
 
-	"github.com/pilosa/pilosa/pql"
+	"github.com/m3dbx/pilosa/pql"
 )
 
 func TestPQL_Generator(t *testing.T) {

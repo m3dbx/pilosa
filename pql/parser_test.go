@@ -18,8 +18,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pilosa/pilosa/pql"
-	_ "github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa/pql"
+	_ "github.com/m3dbx/pilosa/test"
 )
 
 // Ensure the parser can parse PQL.

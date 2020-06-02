@@ -34,9 +34,9 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/logger"
-	"github.com/pilosa/pilosa/tracing"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/logger"
+	"github.com/m3dbx/pilosa/tracing"
 	"github.com/pkg/errors"
 )
 

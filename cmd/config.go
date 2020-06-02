@@ -20,8 +20,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pilosa/pilosa/ctl"
-	"github.com/pilosa/pilosa/server"
+	"github.com/m3dbx/pilosa/ctl"
+	"github.com/m3dbx/pilosa/server"
 )
 
 var conf *ctl.ConfigCommand

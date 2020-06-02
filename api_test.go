@@ -21,9 +21,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/server"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/server"
+	"github.com/m3dbx/pilosa/test"
 )
 
 func TestAPI_Import(t *testing.T) {

@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/test"
 )
 
 func TestHolder_Open(t *testing.T) {

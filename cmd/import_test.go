@@ -18,9 +18,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 
-	"github.com/pilosa/pilosa/cmd"
+	"github.com/m3dbx/pilosa/cmd"
 )
 
 func TestImportHelp(t *testing.T) {

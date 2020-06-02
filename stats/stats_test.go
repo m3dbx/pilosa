@@ -21,11 +21,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/http"
-	"github.com/pilosa/pilosa/logger"
-	"github.com/pilosa/pilosa/stats"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/http"
+	"github.com/m3dbx/pilosa/logger"
+	"github.com/m3dbx/pilosa/stats"
+	"github.com/m3dbx/pilosa/test"
 )
 
 // TestMultiStatClient_Expvar run the multistat client with exp var

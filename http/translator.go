@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 // Ensure implementation implements inteface.

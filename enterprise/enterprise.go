@@ -22,8 +22,8 @@
 package enterprise
 
 import (
-	"github.com/pilosa/pilosa/enterprise/b"
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/enterprise/b"
+	"github.com/m3dbx/pilosa/roaring"
 )
 
 func init() { // nolint: gochecknoinits

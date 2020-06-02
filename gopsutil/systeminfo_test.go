@@ -17,8 +17,8 @@ package gopsutil_test
 import (
 	"testing"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/gopsutil"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/gopsutil"
 )
 
 func TestSystemInfo(t *testing.T) {

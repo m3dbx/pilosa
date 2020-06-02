@@ -27,9 +27,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/encoding/proto"
-	"github.com/pilosa/pilosa/tracing"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/encoding/proto"
+	"github.com/m3dbx/pilosa/tracing"
 	"github.com/pkg/errors"
 )
 

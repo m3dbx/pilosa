@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/test"
 	"golang.org/x/sync/errgroup"
 )
 

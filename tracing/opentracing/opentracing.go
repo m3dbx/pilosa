@@ -7,7 +7,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/pilosa/pilosa/tracing"
+	"github.com/m3dbx/pilosa/tracing"
 )
 
 // Ensure type implements interface.

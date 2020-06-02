@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	picli "github.com/pilosa/pilosa/http"
+	"github.com/m3dbx/pilosa"
+	picli "github.com/m3dbx/pilosa/http"
 )
 
 func TestClusterStuff(t *testing.T) {

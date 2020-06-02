@@ -25,9 +25,9 @@ import (
 	"testing/quick"
 	"time"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/roaring"
-	_ "github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/roaring"
+	_ "github.com/m3dbx/pilosa/test"
 )
 
 func TestContainerCount(t *testing.T) {

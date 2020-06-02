@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/roaring"
 	"github.com/pkg/errors"
 )
 

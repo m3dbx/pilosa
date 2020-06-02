@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/pilosa/pilosa/roaring"
+	"github.com/m3dbx/pilosa/roaring"
 )
 
 // Row is a set of integers (the associated columns), and attributes which are

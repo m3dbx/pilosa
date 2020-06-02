@@ -26,7 +26,7 @@ import (
 	"github.com/cespare/xxhash"
 
 	"github.com/boltdb/bolt"
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 	"github.com/pkg/errors"
 )
 

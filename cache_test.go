@@ -17,7 +17,7 @@ package pilosa_test
 import (
 	"testing"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 // Ensure a bitmap query can be executed.

@@ -17,10 +17,10 @@ package cmd
 import (
 	"io"
 
-	"github.com/pilosa/pilosa/ctl"
-	"github.com/pilosa/pilosa/server"
-	"github.com/pilosa/pilosa/tracing"
-	"github.com/pilosa/pilosa/tracing/opentracing"
+	"github.com/m3dbx/pilosa/ctl"
+	"github.com/m3dbx/pilosa/server"
+	"github.com/m3dbx/pilosa/tracing"
+	"github.com/m3dbx/pilosa/tracing/opentracing"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	jaegercfg "github.com/uber/jaeger-client-go/config"

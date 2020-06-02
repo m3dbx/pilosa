@@ -20,7 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pilosa/pilosa/ctl"
+	"github.com/m3dbx/pilosa/ctl"
 )
 
 var Exporter *ctl.ExportCommand

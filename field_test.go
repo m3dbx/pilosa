@@ -19,9 +19,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/roaring"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/roaring"
+	"github.com/m3dbx/pilosa/test"
 )
 
 // Ensure a field can set & read a bsiGroup value.

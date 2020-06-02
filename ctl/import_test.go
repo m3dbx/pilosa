@@ -26,8 +26,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pilosa/pilosa"
-	"github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa"
+	"github.com/m3dbx/pilosa/test"
 )
 
 func TestImportCommand_Validation(t *testing.T) {

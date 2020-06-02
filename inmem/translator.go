@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/pilosa/pilosa"
+	"github.com/m3dbx/pilosa"
 )
 
 // Ensure type implements interface.

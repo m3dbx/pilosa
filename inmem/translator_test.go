@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pilosa/pilosa/inmem"
+	"github.com/m3dbx/pilosa/inmem"
 )
 
 func TestTranslateStore_TranslateColumn(t *testing.T) {

@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pilosa/pilosa/statsd"
-	_ "github.com/pilosa/pilosa/test"
+	"github.com/m3dbx/pilosa/statsd"
+	_ "github.com/m3dbx/pilosa/test"
 )
 
 func TestStatsClient_WithTags(t *testing.T) {

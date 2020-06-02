@@ -3,7 +3,7 @@
 package roaring
 
 import (
-	"github.com/pilosa/pilosa/stats"
+	"github.com/m3dbx/pilosa/stats"
 )
 
 var statsEv = stats.NewExpvarStatsClient()

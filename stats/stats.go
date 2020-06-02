@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pilosa/pilosa/logger"
+	"github.com/m3dbx/pilosa/logger"
 )
 
 // Expvar global expvar map.
