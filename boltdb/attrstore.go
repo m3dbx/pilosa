@@ -24,10 +24,9 @@ import (
 	"time"
 
 	"github.com/cespare/xxhash"
-
-	"github.com/boltdb/bolt"
 	"github.com/m3dbx/pilosa"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 )
 
 // attrBlockSize is the size of attribute blocks for anti-entropy.
