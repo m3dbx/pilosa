@@ -252,6 +252,8 @@ func (s *TranslateFile) size() int64 {
 
 // isReadOnly returns true if this store is being replicated from a primary store.
 func (s *TranslateFile) isReadOnly() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.PrimaryTranslateStore != nil
 }
 
