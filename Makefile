@@ -22,18 +22,15 @@ default: test build
 clean:
 	rm -rf vendor build
 
-# Set up vendor directory using `dep`
-vendor: Gopkg.toml Gopkg.lock
-	$(MAKE) require-dep
-	dep ensure -vendor-only
-	touch vendor
-
 # Run test suite
-test: vendor
+test:
 	go test ./... -tags='$(BUILD_TAGS)' $(TESTFLAGS)
 
+test-race:
+	go test -timeout 20m -race ./... -tags='$(BUILD_TAGS)' $(TESTFLAGS)
+
 # Run test suite with coverage enabled
-cover: vendor
+cover:
 	mkdir -p build
 	$(MAKE) test TESTFLAGS="-coverprofile=build/coverage.out"
 
@@ -42,7 +39,7 @@ cover-viz: cover
 	go tool cover -html=build/coverage.out
 
 # Compile Pilosa
-build: vendor
+build:
 	go build -tags='$(BUILD_TAGS)' -ldflags $(LDFLAGS) $(FLAGS) ./cmd/pilosa
 
 # Create a single release build under the build directory
@@ -159,10 +156,7 @@ require-%:
 		$(info Verified build dependency "$*" is installed.),\
 		$(error Build dependency "$*" not installed. To install, try `make install-$*`))
 
-install-build-deps: install-dep install-protoc-gen-gofast install-protoc install-stringer install-peg
-
-install-dep:
-	go get -u github.com/golang/dep/cmd/dep
+install-build-deps: install-protoc-gen-gofast install-protoc install-stringer install-peg
 
 install-stringer:
 	go get -u golang.org/x/tools/cmd/stringer
