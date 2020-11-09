@@ -222,6 +222,19 @@ func (b *Bitmap) DirectAdd(v uint64) bool {
 	return cont.add(lowbits(v))
 }
 
+// DirectRemoveAll removes value bypassing the op log and
+// allowing for reuse of the container without any need to enable the
+// standard complicated pooling code paths (which seem to overallocate
+// extensively).
+// Note: Does not repair/change container types.
+func (b *Bitmap) DirectRemoveAll() {
+	citer, _ := b.containersIterator(0)
+	for citer.Next() {
+		_, c := citer.Value()
+		c.removeAll()
+	}
+}
+
 // Contains returns true if v is in the bitmap.
 func (b *Bitmap) Contains(v uint64) bool {
 	c := b.Containers.Get(highbits(v))
@@ -1439,39 +1452,20 @@ func (c *Container) Reset() {
 }
 
 func (c *Container) resetArrayWithMinimumCapacity(size int) {
-	if c.pooled && c.array != nil && cap(c.array) >= size {
-		// We always keep the array capacity around if pooling is enabled,
-		// so just clear it.
-		c.array = c.array[:0]
+	// Whether pooling or not, always reuse later the alloc'd 'elements if
+	// we can. Bitmaps are shortly lived, no point saving memory by clearing
+	// them.
+	if cap(c.array) < size {
+		c.array = make([]uint16, 0, size)
 		return
 	}
-
-	if size == 0 {
-		// Pooling disabled and we don't need the capacity, nil reference
-		// so G.C can reclaim.
-		c.array = nil
-		return
-	}
-
-	c.array = make([]uint16, 0, size)
+	c.array = c.array[:0]
 }
 
 func (c *Container) resetBitmap(allocated bool) {
-	if c.pooled && c.bitmap != nil {
-		// We always keep the bitmap around if pooling is enabled,
-		// so just clear it.
-		for i := range c.bitmap {
-			c.bitmap[i] = 0
-		}
-		return
-	}
-
-	if !allocated {
-		// Pooling disabled and don't need the bitmap so nil it out.
-		c.bitmap = nil
-		return
-	}
-
+	// Whether pooling or not, always reuse later the alloc'd 'elements if
+	// we can. Bitmaps are shortly lived, no point saving memory by clearing
+	// them.
 	if cap(c.bitmap) < bitmapN || c.bitmap == nil {
 		// Need the bitmap, but its too small or doesn't exist, allocate.
 		c.bitmap = make([]uint64, bitmapN)
@@ -1485,21 +1479,14 @@ func (c *Container) resetBitmap(allocated bool) {
 }
 
 func (c *Container) resetRunsWithMinimumCapacity(size int) {
-	if c.pooled && c.runs != nil && cap(c.runs) >= size {
-		// We always keep the run capacity around if pooling is enabled,
-		// so just clear it.
-		c.runs = c.runs[:0]
+	// Whether pooling or not, always reuse later the alloc'd 'elements if
+	// we can. Bitmaps are shortly lived, no point saving memory by clearing
+	// them.
+	if cap(c.runs) < size {
+		c.runs = make([]interval16, 0, size)
 		return
 	}
-
-	if size == 0 {
-		// Pooling disabled and we don't need the capacity, nil reference
-		// so G.C can reclaim.
-		c.runs = nil
-		return
-	}
-
-	c.runs = make([]interval16, 0, size)
+	c.runs = c.runs[:0]
 }
 
 // Mapped returns true if the container is mapped directly to a byte slice
@@ -1938,6 +1925,16 @@ func (c *Container) runRemove(v uint16) bool {
 		c.runs = append(c.runs[:i+1], append([]interval16{{start: v + 1, last: last}}, c.runs[i+1:]...)...)
 	}
 	return true
+}
+
+func (c *Container) removeAll() {
+	c.unmap()
+	c.array = c.array[:0]
+	c.runs = c.runs[:0]
+	for i := range c.bitmap {
+		c.bitmap[i] = 0
+	}
+	c.n = 0
 }
 
 // max returns the maximum value in the container.

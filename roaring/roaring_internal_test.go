@@ -1823,7 +1823,8 @@ func TestWriteReadFullBitmap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error unmarshaling: %v", err)
 	}
-	if !reflect.DeepEqual(bb2.Containers.Get(0).bitmap, cb.bitmap) {
+
+	if bb.IntersectionCount(bb2) != bb.Count() {
 		t.Fatalf("bitmap test expected %x, but got %x", cb.bitmap, bb2.Containers.Get(0).bitmap)
 	}
 
@@ -1883,12 +1884,40 @@ func TestXorArrayRun(t *testing.T) {
 		test.a.n = test.a.count()
 		test.b.n = test.b.count()
 		ret := xor(test.a, test.b)
-		if !reflect.DeepEqual(ret, test.exp) && (cap(ret.array) != 0 || cap(test.exp.array) != 0) {
+
+		// Normalize empty reuseable fields.
+		for _, c := range []*Container{ret, test.exp} {
+			if len(c.array) == 0 {
+				c.array = nil
+			}
+			if len(c.runs) == 0 {
+				c.runs = nil
+			}
+			if len(c.bitmap) == 0 {
+				c.bitmap = nil
+			}
+		}
+
+		if !reflect.DeepEqual(ret, test.exp) {
 			t.Fatalf("test #%v expected %v, but got %v", i, test.exp, ret)
 		}
 
 		ret = xor(test.b, test.a)
-		if !reflect.DeepEqual(ret, test.exp) && (cap(ret.array) != 0 || cap(test.exp.array) != 0) {
+
+		// Normalize empty reuseable fields.
+		for _, c := range []*Container{ret, test.exp} {
+			if len(c.array) == 0 {
+				c.array = nil
+			}
+			if len(c.runs) == 0 {
+				c.runs = nil
+			}
+			if len(c.bitmap) == 0 {
+				c.bitmap = nil
+			}
+		}
+
+		if !reflect.DeepEqual(ret, test.exp) {
 			t.Fatalf("test #%v.1 expected %v, but got %v", i, test.exp, ret)
 		}
 	}
